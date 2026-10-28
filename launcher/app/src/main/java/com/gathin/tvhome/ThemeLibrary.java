@@ -46,6 +46,7 @@ final class ThemeLibrary {
     static void apply(File filesDir, File theme) throws IOException {
         delete(new File(filesDir, Config.FILE_NAME));
         delete(new File(filesDir, Config.WALLPAPER_NAME));
+        delete(new File(filesDir, "verses.json"));
         delete(new File(filesDir, "wallpapers"));
         if (theme != null) copy(theme, filesDir);
     }

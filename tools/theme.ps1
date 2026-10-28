@@ -97,6 +97,11 @@ Invoke-Tv tv.py --push $config "$tmp-config.json" | Out-Null
 Invoke-Tv tv.py (Put 'config.json')
 $wall = Join-Path $Theme 'wallpaper.jpg'
 if (Test-Path $wall) { Invoke-Tv b64push.py $wall "$tmp-wallpaper.jpg"; Invoke-Tv tv.py (Put 'wallpaper.jpg') } else { Invoke-Tv tv.py (Drop 'wallpaper.jpg') | Out-Null }
+# The Noor panel's verse cards, when the theme has them.
+foreach ($extra in @('verses.json')) {
+    $src = Join-Path $Theme $extra
+    if (Test-Path $src) { Invoke-Tv b64push.py $src (Stage $extra); Invoke-Tv tv.py (Put $extra) | Out-Null } else { Invoke-Tv tv.py (Drop $extra) | Out-Null }
+}
 Invoke-Tv tv.py $clearWallpapers | Out-Null
 foreach ($image in $images) {
     Invoke-Tv b64push.py $image.FullName (Stage "wallpapers/$($image.Name)")

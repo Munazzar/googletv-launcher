@@ -280,6 +280,12 @@ final class Config {
     String greetingText = "";
     /** Package opened by Back on Home, with its launch_actions entry (back_opens); "" keeps Back doing nothing. */
     String backOpens = "";
+    /** Animated background (live_background): "noor", "aurora" or "sky"; "" for none. */
+    String liveBackground = "";
+    /** The Noor panel: next prayer, today's times and the verse of the day (noor_panel). */
+    boolean noorPanel;
+    /** A top-bar button for the assistant's voice search, like the remote's mic (assistant_button). */
+    boolean assistantButton;
 
     private Config(List<String> dockApps, boolean fillDock, List<String> hiddenApps, List<String> libraryApps, List<String> libraryExcludedApps, String liveTvPackage,
                    String liveTvAction, String liveTvInputId, Map<String, String> launchActions, Map<String, String> appLabels,
@@ -712,7 +718,13 @@ final class Config {
         c.hijriDate = res.getBoolean(R.bool.hijri_date);
         c.greetingText = res.getString(R.string.greeting_text);
         c.backOpens = res.getString(R.string.back_opens).trim();
+        c.liveBackground = res.getString(R.string.live_background).trim();
+        c.noorPanel = res.getBoolean(R.bool.noor_panel);
+        c.assistantButton = res.getBoolean(R.bool.assistant_button);
         if (json != null) {
+            c.liveBackground = string(json, "live_background", c.liveBackground).trim();
+            c.noorPanel = bool(json, "noor_panel", c.noorPanel);
+            c.assistantButton = bool(json, "assistant_button", c.assistantButton);
             c.backOpens = string(json, "back_opens", c.backOpens).trim();
             lat = string(json, "latitude", lat);
             lon = string(json, "longitude", lon);

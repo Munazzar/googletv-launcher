@@ -249,6 +249,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private Festival festival = Festival.NONE;
     /** For the greeting_text, hijri_date and prayer_times line, read on every minute tick. */
     private Config homeConfig;
+    private NoorPanel noorPanel;
     private boolean festive;
     private DiyaDrawable diya;
     private BellDrawable bell;
@@ -478,6 +479,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // the theme's background, so launch looks the same.
         getWindow().setBackgroundDrawable(null);
         wallpaperPlayer = new WallpaperPlayer(this, root, cfg);
+        if (!cfg.liveBackground.isEmpty()) {
+            // Over the wallpaper and the sky, under everything else.
+            root.addView(new LiveBackdrop(this, cfg.liveBackground, cfg.animations, cfg.monochrome), 1, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        }
+        if (cfg.noorPanel) {
+            noorPanel = new NoorPanel(this, cfg, Config.dir(this));
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(Math.round(400 * density),
+                    FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
+            lp.topMargin = Math.round(112 * density);   // under the top bar's buttons
+            lp.setMarginEnd(Math.round(56 * density));
+            root.addView(noorPanel, root.indexOfChild(findViewById(R.id.racePanel)) + 1, lp);
+        }
         sky = findViewById(R.id.sky);
         sky.setIntensity(cfg.skyIntensity);
         glass = findViewById(R.id.glass);
@@ -2427,9 +2441,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * The logo keeps its colours: the pill style's tint, which turns the other icons white, is cleared.
      */
     private void addTopBarApps(List<String> packages, Map<String, String> launchActions) {
-        ViewGroup bar = findViewById(R.id.topButtons);
+        // assistant_button: the remote's mic as a button (Gemini / Google Assistant voice search), first in the row.
+        if (homeConfig.assistantButton && getPackageManager().resolveActivity(new Intent(Intent.ACTION_ASSIST), 0) != null) {
+            addTopBarButton(getDrawable(R.drawable.ic_assistant), getString(R.string.assistant),
+                    new Intent(Intent.ACTION_ASSIST));
+        }
         PackageManager pm = getPackageManager();
-        int size = Math.round(22 * density);
         for (String pkg : packages) {
             Intent launch = appLaunchIntent(pkg, launchActions);
             if (launch == null) continue;   // not installed, or disabled
@@ -2442,19 +2459,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             } catch (PackageManager.NameNotFoundException e) {
                 continue;
             }
-            TextView button = (TextView) getLayoutInflater().inflate(R.layout.top_app_button, bar, false);
-            // pillKeys finds the bar's ends by id: without one of its own, every app button would be an end.
-            button.setId(View.generateViewId());
-            logo.setBounds(0, 0, size, size);
-            button.setCompoundDrawablesRelative(logo, null, null, null);
-            button.setCompoundDrawableTintList(null);
-            button.setContentDescription(label);
-            Intent target = launch;
-            button.setOnClickListener(v -> open(new Intent(target)));
-            // After the network pill and the VPN pill; the Hebrew bar runs the other way, so before both there.
-            bar.addView(button, bar.indexOfChild(getResources().getBoolean(R.bool.rtl_menu_bar) ? btnVpn : btnWifi));
-            topAppButtons.add(button);
+            addTopBarButton(logo, label, launch);
         }
+    }
+
+    /** A round top-bar button showing {@code logo} that opens {@code target}, left of the network pill. */
+    private void addTopBarButton(Drawable logo, CharSequence label, Intent target) {
+        ViewGroup bar = findViewById(R.id.topButtons);
+        int size = Math.round(22 * density);
+        TextView button = (TextView) getLayoutInflater().inflate(R.layout.top_app_button, bar, false);
+        // pillKeys finds the bar's ends by id: without one of its own, every app button would be an end.
+        button.setId(View.generateViewId());
+        logo.setBounds(0, 0, size, size);
+        button.setCompoundDrawablesRelative(logo, null, null, null);
+        button.setCompoundDrawableTintList(null);
+        button.setContentDescription(label);
+        button.setOnClickListener(v -> open(new Intent(target)));
+        // After the network pill and the VPN pill; the Hebrew bar runs the other way, so before both there.
+        bar.addView(button, bar.indexOfChild(getResources().getBoolean(R.bool.rtl_menu_bar) ? btnVpn : btnWifi));
+        topAppButtons.add(button);
     }
 
     /** An app's launch intent with its launch_actions entry applied, or null when it is not installed or disabled. */
@@ -2629,6 +2652,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (lunar) lunarDate.setText(Lunar.today(getResources(), lunarOffset));
         String noor = noorLine();
         if (!noor.isEmpty()) lunarDate.setText(noor);
+        if (noorPanel != null) noorPanel.update();
     }
 
     /** "Jumada I 12, 1448 AH · Asr 3:42 PM" from hijri_date and prayer_times; "" when both are off. */

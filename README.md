@@ -2,12 +2,18 @@
 > Chromecast with Google TV 4K (Google TV 14). Everything below is the original README; this fork adds, all off by
 > default and switched on by a theme or `config.xml`:
 >
-> - **Noor theme** (`themes/noor`): the [Noor](https://github.com/Munazzar/noor) app's navy, glass and crescent, an
->   "Assalamu alaikum" greeting (`greeting_text`), the **Hijri date** (`hijri_date`) and the **next prayer**
->   (`prayer_times`, computed offline; `prayer_method` isna / mwl / egypt / karachi / makkah, `asr_method`
->   standard / hanafi, `latitude` / `longitude`), and a top-bar button into Noor's Dock clock.
-> - **Black and white** (`monochrome`) and **Liquid glass icons** (`glass_icons`), both also toggled on the TV
->   under Launcher settings.
+> - **Live backgrounds** (`live_background`): `noor` (the [Noor](https://github.com/Munazzar/noor) app's drifting
+>   colour blobs, twinkling stars, a glowing crescent, shooting stars), `aurora` and `sky` (follows the time of
+>   day). Drawn on their own surface at 20 fps, so Home is not redrawn for them.
+> - **Noor theme** (`themes/noor`): the live Noor sky, an "Assalamu alaikum" greeting (`greeting_text`), the
+>   **Hijri date** (`hijri_date`), and the **Noor panel** (`noor_panel`): next prayer with a countdown, the five
+>   times (computed offline; `prayer_method` isna / mwl / egypt / karachi / makkah, `asr_method` standard /
+>   hanafi, `latitude` / `longitude`) and a verse or hadith of the day from Noor's cards. `prayer_times` puts the
+>   next prayer on the date line instead. A top-bar button opens Noor's Dock clock.
+> - **Liquid glass icons** (`glass_icons`): icons on glass cards with a light-catching rim, a specular band and
+>   the app's colour glowing up from the bottom; and **Black and white** (`monochrome`). Both also on the TV under
+>   Launcher settings.
+> - **Assistant button** (`assistant_button`): Gemini / Google Assistant voice search from the top bar.
 > - **On-TV theme picker**: Launcher settings > Theme, for themes stored once with `tools\theme-library.ps1`.
 > - **Back on Home opens an app** (`back_opens`), and `launch_actions` can open a given activity with extras
 >   (`pkg=.Activity?key=value`), used for the Aerial Views screensaver button.

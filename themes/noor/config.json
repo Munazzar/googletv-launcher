@@ -1,6 +1,6 @@
 {
   "background_color": "#060A17",
-  "wallpaper": true,
+  "wallpaper": false,
   "dock_glass": true,
   "icon_only_buttons": true,
   "launcher_settings_button": true,
@@ -11,10 +11,20 @@
   "columns": 5,
   "greeting_text": "Assalamu alaikum",
   "hijri_date": true,
-  "prayer_times": true,
+  "prayer_times": false,
   "prayer_method": "isna",
   "asr_method": "standard",
-  "top_bar_apps": ["com.munazzar.noor", "com.neilturner.aerialviews"],
-  "launch_actions": ["com.neilturner.aerialviews=.ui.screensaver.TestActivity", "com.munazzar.noor=.MainActivity?tab=dock"],
-  "back_opens": "com.neilturner.aerialviews"
+  "top_bar_apps": [
+    "com.munazzar.noor",
+    "com.neilturner.aerialviews"
+  ],
+  "launch_actions": [
+    "com.neilturner.aerialviews=.ui.screensaver.TestActivity",
+    "com.munazzar.noor=.MainActivity?tab=dock"
+  ],
+  "back_opens": "com.neilturner.aerialviews",
+  "live_background": "noor",
+  "noor_panel": true,
+  "glass_icons": true,
+  "assistant_button": true
 }

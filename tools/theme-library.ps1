@@ -28,7 +28,7 @@ foreach ($theme in $Themes) {
     $name = Split-Path $theme -Leaf
     if ($name -notmatch '^[A-Za-z0-9_-]{1,40}$') { throw "theme folder name '$name' must be letters, digits, - or _" }
     if (-not (Test-Path (Join-Path $theme 'config.json'))) { throw "no config.json in $theme" }
-    $files = @(@('config.json', 'wallpaper.jpg') | Where-Object { Test-Path (Join-Path $theme $_) })
+    $files = @(@('config.json', 'wallpaper.jpg', 'verses.json') | Where-Object { Test-Path (Join-Path $theme $_) })
     $walls = Join-Path $theme 'wallpapers'
     if (Test-Path $walls -PathType Container) {
         $files += Get-ChildItem $walls -File | Where-Object { $_.Name -match '^[A-Za-z0-9_.-]+\.(jpg|jpeg|png|webp)$' -or $_.Name -eq 'captions.txt' } |

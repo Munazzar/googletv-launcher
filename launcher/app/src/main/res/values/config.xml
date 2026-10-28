@@ -468,6 +468,17 @@
          Aerial Views' screensaver: back_opens com.neilturner.aerialviews with launch_actions
          com.neilturner.aerialviews=.ui.screensaver.TestActivity. "back_opens" in a theme. -->
     <string name="back_opens" translatable="false"></string>
+    <!-- An animated background drawn on the TV, instead of the wallpaper: "noor" (drifting colour blobs, twinkling
+         stars, a glowing crescent), "aurora" (flowing ribbons) or "sky" (follows the time of day). About 24 frames a
+         second while Home is on screen; still with animations off. Empty: none. "live_background" in a theme. -->
+    <string name="live_background" translatable="false"></string>
+    <!-- The Noor panel right of the clock: next prayer with a countdown, today's five times, and a verse or hadith of
+         the day from the theme's verses.json. Needs latitude and longitude for the
+         times. "noor_panel" in a theme. -->
+    <bool name="noor_panel">false</bool>
+    <!-- A round top-bar button that starts the assistant's voice search (Gemini or Google Assistant on Google TV),
+         the same as the remote's mic. Hidden when nothing handles it. "assistant_button" in a theme. -->
+    <bool name="assistant_button">false</bool>
     <!-- The whole Home screen in black and white. Also on the TV under Launcher settings; "monochrome" in a theme. -->
     <bool name="monochrome">false</bool>
 

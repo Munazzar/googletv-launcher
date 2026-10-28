@@ -61,6 +61,7 @@
     <string name="monochrome_state">Black and white: %1$s</string>
     <string name="glass_icons_state">Liquid glass icons: %1$s</string>
     <string name="theme_label">Theme</string>
+    <string name="assistant">Assistant and search</string>
     <string name="theme_state">Theme: %1$s</string>
     <string name="theme_custom">Pushed from PC</string>
     <string name="theme_builtin">Built-in</string>
