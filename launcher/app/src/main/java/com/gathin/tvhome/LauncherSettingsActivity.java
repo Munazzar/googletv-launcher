@@ -34,6 +34,10 @@ public final class LauncherSettingsActivity extends Activity {
     private final TextView[] dockChoices = new TextView[DOCK_OPACITIES.length];
     private TextView wallpaperChoice;
     private TextView animationsChoice;
+    private TextView monochromeChoice;
+    private boolean monochrome;
+    private TextView glassIconsChoice;
+    private boolean glassIcons;
     private TextView advancedChoice;
     private TextView followThemeChoice;
     private TextView openOnStartChoice;
@@ -59,6 +63,8 @@ public final class LauncherSettingsActivity extends Activity {
         rowsBelowDock = config.rowsBelowDock;
         dockOpacity = config.dockOpacity;
         animations = config.animations;
+        monochrome = config.monochrome;
+        glassIcons = config.glassIcons;
         advancedEffects = config.animations && config.advancedEffects;
 
         int[] ids = {R.id.columns4, R.id.columns5, R.id.columns6, R.id.columns7};
@@ -106,6 +112,11 @@ public final class LauncherSettingsActivity extends Activity {
             reverseRow(rowChoices);
             reverseRow(dockChoices);
         }
+        TextView themeChoice = findViewById(R.id.themeChoice);
+        File activeTheme = ThemeLibrary.active(Config.dir(this), ThemeLibrary.list(Config.dir(this)));
+        themeChoice.setText(getString(R.string.theme_state,
+                activeTheme != null ? activeTheme.getName() : getString(R.string.theme_custom)));
+        themeChoice.setOnClickListener(v -> showThemePicker());
         wallpaperChoice = findViewById(R.id.wallpaperChoice);
         wallpaperChoice.setOnClickListener(v -> showWallpaperPicker());
         animationsChoice = findViewById(R.id.animationsChoice);
@@ -114,6 +125,20 @@ public final class LauncherSettingsActivity extends Activity {
             if (!animations) advancedEffects = false;
             choices.edit().putBoolean("animations", animations)
                     .putBoolean("advanced_effects", advancedEffects).apply();
+            changed();
+            refresh();
+        });
+        monochromeChoice = findViewById(R.id.monochromeChoice);
+        monochromeChoice.setOnClickListener(v -> {
+            monochrome = !monochrome;
+            choices.edit().putBoolean("monochrome", monochrome).apply();
+            changed();
+            refresh();
+        });
+        glassIconsChoice = findViewById(R.id.glassIconsChoice);
+        glassIconsChoice.setOnClickListener(v -> {
+            glassIcons = !glassIcons;
+            choices.edit().putBoolean("glass_icons", glassIcons).apply();
             changed();
             refresh();
         });
@@ -138,7 +163,7 @@ public final class LauncherSettingsActivity extends Activity {
         followThemeChoice = findViewById(R.id.followThemeChoice);
         followThemeChoice.setOnClickListener(v -> {
             if (!hasOnTvChoices()) return;
-            choices.edit().remove("columns").remove(Config.ROWS_BELOW_DOCK_KEY).remove("animations")
+            choices.edit().remove("columns").remove(Config.ROWS_BELOW_DOCK_KEY).remove("animations").remove("monochrome").remove("glass_icons")
                     .remove("advanced_effects").remove(Config.WALLPAPER_CHOICE_KEY)
                     .remove(Config.DOCK_OPACITY_KEY).remove(OpenOnStart.KEY).commit();
             Config current = Config.load(this);
@@ -147,6 +172,8 @@ public final class LauncherSettingsActivity extends Activity {
             dockOpacity = current.dockOpacity;
             animations = current.animations;
             advancedEffects = current.animations && current.advancedEffects;
+            monochrome = current.monochrome;
+            glassIcons = current.glassIcons;
             changed();
             refresh();
         });
@@ -165,6 +192,34 @@ public final class LauncherSettingsActivity extends Activity {
         LinearLayout row = (LinearLayout) views[0].getParent();
         row.removeAllViews();
         for (int i = views.length - 1; i >= 0; i--) row.addView(views[i]);
+    }
+
+    /** The themes in files/themes plus the built-in look; picking one copies it in and restarts Home. */
+    private void showThemePicker() {
+        File dir = Config.dir(this);
+        List<File> themes = ThemeLibrary.list(dir);
+        if (dir == null || themes.isEmpty()) {
+            Toast.makeText(this, R.string.theme_none_on_tv, Toast.LENGTH_LONG).show();
+            return;
+        }
+        String[] labels = new String[themes.size() + 1];
+        for (int i = 0; i < themes.size(); i++) labels[i] = themes.get(i).getName();
+        labels[themes.size()] = getString(R.string.theme_builtin);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.theme_label)
+                .setItems(labels, (dialog, which) -> {
+                    File theme = which < themes.size() ? themes.get(which) : null;
+                    try {
+                        ThemeLibrary.apply(dir, theme);
+                    } catch (java.io.IOException e) {
+                        Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    changed();
+                    finish();   // Home restarts on the new theme
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private void showWallpaperPicker() {
@@ -288,6 +343,10 @@ public final class LauncherSettingsActivity extends Activity {
         }
         animationsChoice.setText(getString(R.string.animations_state,
                 getString(animations ? R.string.on : R.string.off)));
+        glassIconsChoice.setText(getString(R.string.glass_icons_state,
+                getString(glassIcons ? R.string.on : R.string.off)));
+        monochromeChoice.setText(getString(R.string.monochrome_state,
+                getString(monochrome ? R.string.on : R.string.off)));
         advancedChoice.setText(getString(R.string.advanced_effects_state,
                 getString(advancedEffects ? R.string.on : R.string.off)));
         advancedChoice.setEnabled(animations);
@@ -305,7 +364,7 @@ public final class LauncherSettingsActivity extends Activity {
         return choices.contains("columns") || choices.contains(Config.ROWS_BELOW_DOCK_KEY)
                 || choices.contains("animations") || choices.contains("advanced_effects")
                 || choices.contains(Config.WALLPAPER_CHOICE_KEY) || choices.contains(Config.DOCK_OPACITY_KEY)
-                || choices.contains(OpenOnStart.KEY);
+                || choices.contains(OpenOnStart.KEY) || choices.contains("monochrome") || choices.contains("glass_icons");
     }
 
     private void open(Intent intent) {

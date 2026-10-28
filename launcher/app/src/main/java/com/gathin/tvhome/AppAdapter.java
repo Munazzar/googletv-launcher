@@ -218,6 +218,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final Map<String, String> appLabels, appBanners;
     /** Every app tile is its icon on a card tinted from that icon, never its banner (config.xml, uniform_tiles). */
     private final boolean uniformTiles;
+    private final boolean glassIcons;
+    private final android.graphics.ColorFilter glassTint;
     /** Packages drawn from their icon and name even when they have a banner (config.xml icon_tiles). */
     private final Set<String> iconTiles;
     private final List<Entry> items = new ArrayList<>();
@@ -248,6 +250,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.appLabels = cfg.appLabels;
         this.appBanners = cfg.appBanners;
         this.uniformTiles = cfg.uniformTiles;
+        this.glassIcons = cfg.glassIcons;
+        this.glassTint = cfg.glassIcons ? glassTint() : null;
         // Tiles keep their identity across reload(), so a focused tile stays on its app instead of
         // its view being rebound to whatever app now sits in that slot.
         setHasStableIds(true);
@@ -490,10 +494,14 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         // A fully opaque banner covers the whole card (centerCrop), so the card's own fill under it is drawn for
         // nothing on every frame; keep it under banners with transparent parts and under icon tiles.
         h.card.setBackground(e.banner != null && e.banner.getOpacity() == PixelFormat.OPAQUE ? null : h.cardBackground);
-        if (uniformTiles && e.banner == null) {
+        if (glassIcons && e.banner == null) {
+            h.card.setBackground(glassCard(h.cardBackground));
+        } else if (uniformTiles && e.banner == null) {
             if (e.backdrop == null) e.backdrop = backdrop(e.icon, ambientColorAt(position));
             h.card.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, e.backdrop));
         }
+        h.icon.setColorFilter(glassTint);
+        h.icon.setImageAlpha(glassIcons ? 235 : 255);
         if (e.banner != null) {
             h.banner.setImageDrawable(e.banner);
             h.banner.setVisibility(View.VISIBLE);
@@ -522,6 +530,30 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
             return true;
         });
+    }
+
+    /** glass_icons: the icon's colours muted to a third and lifted a little, so it reads as tinted glass. */
+    private static android.graphics.ColorMatrixColorFilter glassTint() {
+        android.graphics.ColorMatrix m = new android.graphics.ColorMatrix();
+        m.setSaturation(0.35f);
+        android.graphics.ColorMatrix lift = new android.graphics.ColorMatrix(new float[]{
+                0.85f, 0, 0, 0, 30, 0, 0.85f, 0, 0, 30, 0, 0, 0.85f, 0, 30, 0, 0, 0, 1, 0});
+        m.postConcat(lift);
+        return new android.graphics.ColorMatrixColorFilter(m);
+    }
+
+    /** A frosted card with the tile's own corners: a faint white fill, a light rim and a sheen across the top. */
+    private Drawable glassCard(Drawable shape) {
+        float r = shape instanceof GradientDrawable ? ((GradientDrawable) shape).getCornerRadius() : 0f;
+        float d = ctx.getResources().getDisplayMetrics().density;
+        GradientDrawable fill = new GradientDrawable();
+        fill.setCornerRadius(r);
+        fill.setColor(0x24FFFFFF);
+        fill.setStroke(Math.round(1.5f * d), 0x59FFFFFF);
+        GradientDrawable sheen = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0x38FFFFFF, 0x00FFFFFF, 0x00FFFFFF});
+        sheen.setCornerRadius(r);
+        return new android.graphics.drawable.LayerDrawable(new Drawable[]{fill, sheen});
     }
 
     /** Opens the tile's activity by explicit component, with no extras: a card can name nothing else. */

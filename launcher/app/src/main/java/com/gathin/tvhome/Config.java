@@ -264,6 +264,22 @@ final class Config {
     final boolean singleRow;
     /** With single_row, the band runs behind every app in the row, not only the dock apps (config.xml, dock_band_all). */
     final boolean dockBandAll;
+    // Set after the constructor, from config.xml, the theme and (monochrome) the TV's own choice; see load().
+    /** The whole Home screen in black and white (monochrome). */
+    boolean monochrome;
+    /** App icons on frosted-glass cards instead of banners (glass_icons; turns on uniform_tiles). */
+    boolean glassIcons;
+    /** The next prayer under the date (prayer_times), for prayerLat/prayerLon; NaN without a place. */
+    boolean prayerTimes;
+    double prayerLat = Double.NaN, prayerLon = Double.NaN;
+    String prayerMethod = "isna";
+    boolean asrHanafi;
+    /** The Hijri date under the date (hijri_date). */
+    boolean hijriDate;
+    /** Fixed text in place of the time-of-day greeting (greeting_text); "" for none. */
+    String greetingText = "";
+    /** Package opened by Back on Home, with its launch_actions entry (back_opens); "" keeps Back doing nothing. */
+    String backOpens = "";
 
     private Config(List<String> dockApps, boolean fillDock, List<String> hiddenApps, List<String> libraryApps, List<String> libraryExcludedApps, String liveTvPackage,
                    String liveTvAction, String liveTvInputId, Map<String, String> launchActions, Map<String, String> appLabels,
@@ -668,7 +684,11 @@ final class Config {
         Festival festival = json == null ? Festival.NONE : Festival.parse(string(json, "festival", ""),
                 string(json, "festival_until", ""), string(json, "greeting", ""), string(json, "accent_color", ""));
 
-        return new Config(dock, fillDock, hidden, libraryApps, libraryExcludedApps, liveTv, liveTvAction, liveTvInputId, packageMap(launchActions), packageMap(appLabels),
+        boolean glassIcons = res.getBoolean(R.bool.glass_icons);
+        if (json != null) glassIcons = bool(json, "glass_icons", glassIcons);
+        glassIcons = choices.getBoolean("glass_icons", glassIcons);
+        if (glassIcons) uniformTiles = true;   // glass icons are icon tiles on a glass card
+        Config c = new Config(dock, fillDock, hidden, libraryApps, libraryExcludedApps, liveTv, liveTvAction, liveTvInputId, packageMap(launchActions), packageMap(appLabels),
                 packageMap(appBanners), panelService, panelAction, panelExtra, coocaaSources, inputAction, inputSources, inputUriScheme, Math.max(1, columns),
                 Math.max(0, rowsBelow), animations, advancedEffects, shamsi, greetingName, moduleCards, reducedMotion, bootToLiveTv,
                 openOnStartChoice, dockTitle, dockRow, topMenu, launcherSettingsButton, reorderButton, showNetworkPill, showInputsPill,
@@ -683,6 +703,36 @@ final class Config {
                 Math.max(0, Math.min(90, clockWallpaperDim)), clockGlow, glassStyle, singleRow && dockRow, dockBandAll, lunar, lunarOffset,
                 dateBelowClock, vpnPill, locale, powerOnHomeAlways, inputsConnectedOnly,
                 Math.max(0, Math.min(600, openOnStartNetworkWait)));
+        String lat = res.getString(R.string.latitude), lon = res.getString(R.string.longitude);
+        c.glassIcons = glassIcons;
+        c.monochrome = res.getBoolean(R.bool.monochrome);
+        c.prayerTimes = res.getBoolean(R.bool.prayer_times);
+        c.prayerMethod = res.getString(R.string.prayer_method);
+        String asr = res.getString(R.string.asr_method);
+        c.hijriDate = res.getBoolean(R.bool.hijri_date);
+        c.greetingText = res.getString(R.string.greeting_text);
+        c.backOpens = res.getString(R.string.back_opens).trim();
+        if (json != null) {
+            c.backOpens = string(json, "back_opens", c.backOpens).trim();
+            lat = string(json, "latitude", lat);
+            lon = string(json, "longitude", lon);
+            c.monochrome = bool(json, "monochrome", c.monochrome);
+            c.prayerTimes = bool(json, "prayer_times", c.prayerTimes);
+            c.prayerMethod = string(json, "prayer_method", c.prayerMethod);
+            asr = string(json, "asr_method", asr);
+            c.hijriDate = bool(json, "hijri_date", c.hijriDate);
+            c.greetingText = string(json, "greeting_text", c.greetingText);
+        }
+        c.monochrome = choices.getBoolean("monochrome", c.monochrome);
+        c.asrHanafi = "hanafi".equalsIgnoreCase(asr.trim());
+        c.greetingText = Cards.cleanLabel(c.greetingText, "");
+        try {
+            c.prayerLat = Double.parseDouble(lat.trim());
+            c.prayerLon = Double.parseDouble(lon.trim());
+        } catch (NumberFormatException e) {
+            c.prayerLat = Double.NaN;   // no place, no prayer times
+        }
+        return c;
     }
 
     /**
@@ -724,12 +774,12 @@ final class Config {
             // Existing preferences survive an app upgrade, unless the first launch follows an
             // explicit theme push or reset by the updated tools.
             SharedPreferences.Editor editor = choices.edit();
-            if (!"absent".equals(token)) editor.remove("columns").remove("animations")
+            if (!"absent".equals(token)) editor.remove("columns").remove("animations").remove("monochrome").remove("glass_icons")
                     .remove("advanced_effects").remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY)
                     .remove(DOCK_OPACITY_KEY);
             editor.putString(THEME_SIGNATURE_KEY, signature).commit();
         } else if (!seen.equals(signature)) {
-            choices.edit().remove("columns").remove("animations").remove("advanced_effects")
+            choices.edit().remove("columns").remove("animations").remove("monochrome").remove("glass_icons").remove("advanced_effects")
                     .remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY).remove(DOCK_OPACITY_KEY)
                     .putString(THEME_SIGNATURE_KEY, signature).commit();
         }

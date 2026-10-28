@@ -89,14 +89,29 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/wallpaperChoice"
+            android:id="@+id/themeChoice"
             style="@style/SettingsRow"
             android:layout_marginTop="28dp" />
+
+        <TextView
+            android:id="@+id/wallpaperChoice"
+            style="@style/SettingsRow"
+            android:layout_marginTop="10dp" />
 
         <TextView
             android:id="@+id/animationsChoice"
             style="@style/SettingsRow"
             android:layout_marginTop="28dp" />
+
+        <TextView
+            android:id="@+id/glassIconsChoice"
+            style="@style/SettingsRow"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:id="@+id/monochromeChoice"
+            style="@style/SettingsRow"
+            android:layout_marginTop="10dp" />
 
         <TextView
             android:id="@+id/advancedChoice"

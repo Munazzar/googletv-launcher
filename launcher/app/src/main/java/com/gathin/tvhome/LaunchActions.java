@@ -37,8 +37,19 @@ final class LaunchActions {
         return uri.isEmpty() ? null : uri;
     }
 
-    /** The intent for a launch_actions value, limited to its package: ACTION_VIEW on the URI, or the action. */
+    /** The intent for a launch_actions value, limited to its package: ACTION_VIEW on the URI, an activity of the
+     *  package for a value starting with "." (".ui.screensaver.TestActivity", or ".MainActivity?tab=dock" with
+     *  string extras, sent as ACTION_VIEW like an app shortcut), or the action. */
     static Intent intent(String pkg, String value) {
+        if (value.startsWith(".")) {
+            String[] parts = value.trim().split("\\?", 2);
+            Intent i = new Intent(Intent.ACTION_VIEW).setClassName(pkg, pkg + parts[0]);
+            if (parts.length > 1) for (String pair : parts[1].split("&")) {
+                int eq = pair.indexOf('=');
+                if (eq > 0) i.putExtra(pair.substring(0, eq), pair.substring(eq + 1));
+            }
+            return i;
+        }
         String uri = viewUri(value);
         Intent i = uri != null ? new Intent(Intent.ACTION_VIEW, Uri.parse(uri)) : new Intent(value);
         return i.setPackage(pkg);

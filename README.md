@@ -1,3 +1,19 @@
+> **googletv-launcher** is a fork of [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv) (MIT), tested on a
+> Chromecast with Google TV 4K (Google TV 14). Everything below is the original README; this fork adds, all off by
+> default and switched on by a theme or `config.xml`:
+>
+> - **Noor theme** (`themes/noor`): the [Noor](https://github.com/Munazzar/noor) app's navy, glass and crescent, an
+>   "Assalamu alaikum" greeting (`greeting_text`), the **Hijri date** (`hijri_date`) and the **next prayer**
+>   (`prayer_times`, computed offline; `prayer_method` isna / mwl / egypt / karachi / makkah, `asr_method`
+>   standard / hanafi, `latitude` / `longitude`), and a top-bar button into Noor's Dock clock.
+> - **Black and white** (`monochrome`) and **Liquid glass icons** (`glass_icons`), both also toggled on the TV
+>   under Launcher settings.
+> - **On-TV theme picker**: Launcher settings > Theme, for themes stored once with `tools\theme-library.ps1`.
+> - **Back on Home opens an app** (`back_opens`), and `launch_actions` can open a given activity with extras
+>   (`pkg=.Activity?key=value`), used for the Aerial Views screensaver button.
+>
+> The release APK is signed with a debug key: install it over ADB as the original README describes.
+
 <p align="center">
   <a href="https://cleanyour.tv"><img src="https://raw.githubusercontent.com/Gathin23/cleanyourtv/main/docs/banner.png" alt="CleanYourTV. Your TV, minus the ads. Strip the bloatware from any Android TV or Google TV over Wi-Fi and replace the ad-filled home screen with a clean launcher that looks like an Apple TV. No root, no cable, nothing uninstalled, and a one-line restore." width="800"></a>
 </p>

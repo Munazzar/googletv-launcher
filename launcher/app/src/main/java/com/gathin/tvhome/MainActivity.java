@@ -247,6 +247,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean focusOvershoot;
     /** Festive skin from the theme (see Festival); applied while it is active today. */
     private Festival festival = Festival.NONE;
+    /** For the greeting_text, hijri_date and prayer_times line, read on every minute tick. */
+    private Config homeConfig;
     private boolean festive;
     private DiyaDrawable diya;
     private BellDrawable bell;
@@ -424,6 +426,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         density = getResources().getDisplayMetrics().density;
         // config.xml, overlaid by config.json from a pushed theme (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
+        homeConfig = cfg;
+        if (cfg.monochrome) {
+            // One saturation-0 filter over the whole window: every tile, glow and wallpaper turns grey.
+            android.graphics.ColorMatrix grey = new android.graphics.ColorMatrix();
+            grey.setSaturation(0);
+            Paint paint = new Paint();
+            paint.setColorFilter(new android.graphics.ColorMatrixColorFilter(grey));
+            getWindow().getDecorView().setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+        }
         homeAppKeys = RemoteKeys.parseAppKeys(cfg.appKeys);
         appLibrarySelection = cfg.appLibrarySelection;
         libraryOkOpens = cfg.libraryOkOpens;
@@ -540,7 +551,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         lunarDate = findViewById(R.id.lunarDate);
         lunar = cfg.lunarDate;
         lunarOffset = Lunar.offsetFor(cfg.lunarUtcOffset, Locale.getDefault());
-        if (lunar) lunarDate.setVisibility(View.VISIBLE);
+        if (lunar || cfg.hijriDate || cfg.prayerTimes && !Double.isNaN(cfg.prayerLat)) lunarDate.setVisibility(View.VISIBLE);
         greetingName = cfg.greetingName;
         if (cfg.dateBelowClock) moveDateBelowClock();
         if (shamsi) {
@@ -1652,7 +1663,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     public void onBackPressed() {
-        // Home screen: Back goes nowhere.
+        // Home screen: Back goes nowhere, unless back_opens names an app (e.g. Aerial Views' screensaver).
+        if (homeConfig.backOpens.isEmpty()) return;
+        Intent launch = appLaunchIntent(homeConfig.backOpens, homeConfig.launchActions);
+        if (launch != null) open(launch);
     }
 
     // ---- glass highlight -------------------------------------------------------------------------
@@ -2417,14 +2431,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         PackageManager pm = getPackageManager();
         int size = Math.round(22 * density);
         for (String pkg : packages) {
-            Intent launch = pm.getLeanbackLaunchIntentForPackage(pkg);
-            if (launch == null) launch = pm.getLaunchIntentForPackage(pkg);
+            Intent launch = appLaunchIntent(pkg, launchActions);
             if (launch == null) continue;   // not installed, or disabled
-            // Use the same configured launch_actions as tiles; retain the normal entry if unavailable.
-            launch = LaunchActions.select(pkg, launchActions, launch, (targetPackage, action) -> {
-                Intent custom = LaunchActions.intent(targetPackage, action);
-                return pm.resolveActivity(custom, 0) != null ? custom : null;
-            });
             Drawable logo;
             CharSequence label;
             try {
@@ -2447,6 +2455,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             bar.addView(button, bar.indexOfChild(getResources().getBoolean(R.bool.rtl_menu_bar) ? btnVpn : btnWifi));
             topAppButtons.add(button);
         }
+    }
+
+    /** An app's launch intent with its launch_actions entry applied, or null when it is not installed or disabled. */
+    private Intent appLaunchIntent(String pkg, Map<String, String> launchActions) {
+        PackageManager pm = getPackageManager();
+        Intent launch = pm.getLeanbackLaunchIntentForPackage(pkg);
+        if (launch == null) launch = pm.getLaunchIntentForPackage(pkg);
+        if (launch == null) return null;
+        // Use the same configured launch_actions as tiles; retain the normal entry if unavailable.
+        return LaunchActions.select(pkg, launchActions, launch, (targetPackage, action) -> {
+            Intent custom = LaunchActions.intent(targetPackage, action);
+            return pm.resolveActivity(custom, 0) != null ? custom : null;
+        });
     }
 
     @Override public void onLibraryUp() {
@@ -2595,10 +2616,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             else if (hour < 22) res = R.string.good_evening;
             else res = R.string.good_night;
         }
-        String festiveGreeting = festive ? festival.greetingText(getResources()) : "";
+        String festiveGreeting = festive ? festival.greetingText(getResources()) : homeConfig.greetingText;
         if (!festiveGreeting.isEmpty()) {
             greeting.setText(festiveGreeting);
-            greeting.setTextColor(liftTowardsWhite(festival.accentColor(), 0.25f));
+            greeting.setTextColor(festive ? liftTowardsWhite(festival.accentColor(), 0.25f) : greetingColor);
         } else {
             greeting.setText(greetingName.isEmpty() ? getString(res)
                     : getString(R.string.greeting_with_name, getString(res), greetingName));
@@ -2606,6 +2627,35 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         if (shamsi) shamsiDate.setText(Shamsi.today(getResources()));
         if (lunar) lunarDate.setText(Lunar.today(getResources(), lunarOffset));
+        String noor = noorLine();
+        if (!noor.isEmpty()) lunarDate.setText(noor);
+    }
+
+    /** "Jumada I 12, 1448 AH · Asr 3:42 PM" from hijri_date and prayer_times; "" when both are off. */
+    private String noorLine() {
+        StringBuilder line = new StringBuilder();
+        if (homeConfig.hijriDate) {
+            line.append(android.icu.text.DateFormat.getDateInstance(android.icu.text.DateFormat.LONG,
+                    new android.icu.util.ULocale(Locale.getDefault().toLanguageTag() + "@calendar=islamic-umalqura"))
+                    .format(new java.util.Date()));
+        }
+        if (homeConfig.prayerTimes && !Double.isNaN(homeConfig.prayerLat)) {
+            java.time.ZoneId zone = java.time.ZoneId.systemDefault();
+            LocalDate today = LocalDate.now(zone);
+            java.time.LocalTime now = java.time.LocalTime.now(zone);
+            int[] times = Prayer.times(today, homeConfig.prayerLat, homeConfig.prayerLon, zone,
+                    homeConfig.prayerMethod, homeConfig.asrHanafi);
+            int next = Prayer.next(times, now.getHour() * 60 + now.getMinute());
+            int at = next >= 0 ? times[next] : Prayer.times(today.plusDays(1), homeConfig.prayerLat,
+                    homeConfig.prayerLon, zone, homeConfig.prayerMethod, homeConfig.asrHanafi)[0];
+            if (at >= 0) {
+                if (line.length() > 0) line.append("  ·  ");
+                String pattern = android.text.format.DateFormat.is24HourFormat(this) ? "H:mm" : "h:mm a";
+                line.append(Prayer.NAMES[Math.max(0, next)]).append(' ').append(java.time.LocalTime
+                        .of(at / 60 % 24, at % 60).format(java.time.format.DateTimeFormatter.ofPattern(pattern, Locale.getDefault())));
+            }
+        }
+        return line.toString();
     }
 
     // ---- race-weekend panel (a theme's race_calendar) -----------------------------------------------

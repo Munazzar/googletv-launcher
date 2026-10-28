@@ -387,6 +387,10 @@
     <!-- Every app tile is its icon on a card tinted from that icon, name only under the focused tile,
          instead of each app's own banner. Off by default; a theme can set "uniform_tiles": true. -->
     <bool name="uniform_tiles">false</bool>
+    <!-- Liquid glass icons: every tile is the app's icon, colours softened, on a frosted-glass card (a faint white
+         fill, a light rim, a sheen across the top) instead of a banner. Turns on uniform_tiles. Also on the TV under
+         Launcher settings; "glass_icons" in a theme. -->
+    <bool name="glass_icons">false</bool>
     <!-- Optional direct Home picker in the app library: OK toggles the checkmark, checked apps first.
          Off by default; a theme can set "app_library_selection": true (also needs app_library). -->
     <bool name="app_library_selection">false</bool>
@@ -449,6 +453,23 @@
          Vilnius: 54.69 and 25.28. -->
     <string name="latitude" translatable="false"></string>
     <string name="longitude" translatable="false"></string>
+    <!-- The next prayer and its time under the date ("Asr 3:42 PM"), computed on the TV from latitude and
+         longitude above (or "latitude"/"longitude" in a theme); nothing shows without a place. prayer_method:
+         isna, mwl, egypt, karachi or makkah; asr_method: standard or hanafi. Theme keys of the same names. -->
+    <bool name="prayer_times">false</bool>
+    <string name="prayer_method" translatable="false">isna</string>
+    <string name="asr_method" translatable="false">standard</string>
+    <!-- The Hijri date under the date ("12 Jumada I 1448"); "hijri_date" in a theme. -->
+    <bool name="hijri_date">false</bool>
+    <!-- Fixed text in place of the time-of-day greeting ("Assalamu alaikum"); empty keeps Good morning and the
+         rest. "greeting_text" in a theme. -->
+    <string name="greeting_text" translatable="false"></string>
+    <!-- An app that Back opens on the Home screen, launched with its launch_actions entry; empty: Back does nothing.
+         Aerial Views' screensaver: back_opens com.neilturner.aerialviews with launch_actions
+         com.neilturner.aerialviews=.ui.screensaver.TestActivity. "back_opens" in a theme. -->
+    <string name="back_opens" translatable="false"></string>
+    <!-- The whole Home screen in black and white. Also on the TV under Launcher settings; "monochrome" in a theme. -->
+    <bool name="monochrome">false</bool>
 
     <!-- Cinematic top shelf: the focused dock app's artwork, softened, fills the top of the screen in its
          colour; the shelf gets a larger name, a "Last opened" line (from the apps Home opened) and dock position

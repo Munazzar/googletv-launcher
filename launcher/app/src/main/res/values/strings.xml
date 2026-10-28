@@ -58,6 +58,13 @@
     <string name="wallpaper_applied">Wallpaper changed</string>
     <string name="wallpaper_theme_default">Theme default</string>
     <string name="animations_state">Animations: %1$s</string>
+    <string name="monochrome_state">Black and white: %1$s</string>
+    <string name="glass_icons_state">Liquid glass icons: %1$s</string>
+    <string name="theme_label">Theme</string>
+    <string name="theme_state">Theme: %1$s</string>
+    <string name="theme_custom">Pushed from PC</string>
+    <string name="theme_builtin">Built-in</string>
+    <string name="theme_none_on_tv">No themes on this TV yet: push them once with tools\\theme-library.ps1</string>
     <string name="advanced_effects">Advanced effects</string>
     <string name="advanced_effects_state">Advanced effects: %1$s</string>
     <string name="open_on_start_label">Open on start</string>

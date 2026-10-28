@@ -10,11 +10,19 @@ final class ThemeFiles {
     private static final Pattern IMAGE = Pattern.compile("[A-Za-z0-9_.-]+\\.(jpg|jpeg|png|webp)",
             Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern THEME_NAME = Pattern.compile("[A-Za-z0-9_-]{1,40}");
+
     private ThemeFiles() {}
 
     /** The path relative to the theme directory, e.g. "config.json" or "wallpapers/dusk.jpg", or null if refused. */
     static String path(List<String> segments) {
         if (segments == null) return null;
+        // themes/<name>/... : a stored theme for the on-TV picker (ThemeLibrary), with the same file rules.
+        if (segments.size() >= 3 && ThemeLibrary.DIR.equals(segments.get(0)) && THEME_NAME.matcher(segments.get(1)).matches()
+                && !ThemeLibrary.DIR.equals(segments.get(2))) {
+            String rest = path(segments.subList(2, segments.size()));
+            return rest == null ? null : ThemeLibrary.DIR + "/" + segments.get(1) + "/" + rest;
+        }
         if (segments.size() == 1) {
             String name = segments.get(0);
             return Config.FILE_NAME.equals(name) || "wallpaper.jpg".equals(name) || "theme_revision".equals(name)
